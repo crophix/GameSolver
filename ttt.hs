@@ -6,16 +6,20 @@ Copyright (c) 2014 Daniel Leblanc
 
 import Data.List
 import Data.Either
+import AsciiPic
 
 -- Some data types to keep track of the game state
-data Symbol     = X | O | T deriving (Eq, Show)
+data Symbol     = X | O deriving (Eq, Show)
 type Square     = Either Int Symbol
 type Board      = [[Square]]
 data GameState  = Game { board :: Board, onMove :: Symbol }
 
 -- Starting game state
-initialGameState :: GameState
-initialGameState  = (Game (map (map Left)[[1,2,3],[4,5,6],[7,8,9]]) X)
+initialState :: GameState
+initialState  = Game (map (map Left)[[1,2,3],[4,5,6],[7,8,9]]) X
+
+testState :: GameState
+testState  = applyMove (applyMove initialState 5) 8
 
 -- list of current available moves
 moves      :: Board -> [Int]
