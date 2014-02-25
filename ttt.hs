@@ -59,4 +59,16 @@ negamax (Game board onmove)
             where state  = [applyMove (Game board onmove) x | x <- moves board]
                   bestSc = negate $ minimum (map negamax state)
 
+picBoard      :: Board -> Pic
+picBoard board = align center (map (align middle) b)
+                 where b = map (map picSquare) board
 
+picSquare         :: Square -> Pic
+picSquare (Left x) = align center [tope, align middle [edge, item,edge], tope]
+                     where edge = text ["|","|","|"]
+                           tope = string "+---+"
+                           item = string (" " ++ show x ++ " ")
+picSquare (Right x)= align center [tope, align middle [edge, item, edge], tope]
+                     where edge = text ["|","|","|"]
+                           tope = string "+---+"
+                           item = string (" " ++ show x ++ " ")

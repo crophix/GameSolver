@@ -11,6 +11,9 @@ render (Pic h w img) = putStr (unlines img)
 
 string  :: String -> Pic
 string s = Pic {height = 1, width = length s, img = [s] }
+ 
+text    :: [String] -> Pic
+text     = align left . map string
 
 block      :: Int -> Int -> Char -> Pic
 block h w c = Pic h w (replicate h (replicate w c))
@@ -23,6 +26,9 @@ hspace w = blank 0 w
 
 vspace  :: Int -> Pic
 vspace h = blank h 0
+
+empty :: Pic
+empty  = Pic 0 0 []
 
 hflip              :: Pic -> Pic
 hflip (Pic h w img) = Pic h w (reverse img)
@@ -54,64 +60,44 @@ center (Pic h1 w1 t) (Pic h2 w2 b) = Pic (h1+h2) w (map (cpad w) t ++ map (cpad 
                                    where w = max w1 w2
 
 lpad     :: Int -> String -> String
-lpad n s  | n == length s = s
-          | n < length s  = lpad n (tail s)
-          | otherwise     = lpad n (' ':s)
+lpad n s  = reverse (rpad n (reverse s))
 
 rpad     :: Int -> String -> String
-rpad n s  | n == length s = s
-          | n < length s  = take n s
-          | otherwise     = rpad n (s ++ " ")
+rpad n s  = take n (s ++ repeat ' ')
 
 cpad     :: Int -> String -> String
-cpad n s  | n == length s = s
-          | n > length s  = cpad n (" " ++ s ++ " ")
-          | otherwise     = cstrip n (splitAt (quot (length s) 2) s)
+cpad n s  = lpad lw (take split s) ++ rpad (n-lw) (drop split s)
+            where split = length s `div` 2
+                  lw    = n `div` 2
 
-cstrip          :: Int -> (String, String) -> String
-cstrip n (a,b)   = reverse (take (quot n 2) (reverse a)) ++ (take (n - (quot n 2)) b)
- 
-align            :: (Pic -> Pic -> Pic) -> [Pic] -> Pic
-align f (a:[])    = a
-align f (a:b:ps)  = align f (f a b : ps)
-
-text :: [String] -> Pic
-text  = align left . map string
+align   :: (Pic -> Pic -> Pic) -> [Pic] -> Pic
+align op = foldr op empty
 
 infixr `top`, `bottom`, `middle`
 
 top, bottom, middle  :: Pic -> Pic -> Pic
-
-top (Pic h1 w1 i1) (Pic h2 w2 i2)    
-                      = Pic h (w1+w2) (zipWith (++) (bpad h w1 i1) (bpad h w2 i2))
-                        where h = max h1 h2
-
-bottom (Pic h1 w1 i1) (Pic h2 w2 i2) 
-                      = Pic h (w1+w2) (zipWith (++) (tpad h w1 i1) (tpad h w2 i2))
-                        where h = max h1 h2
-
-middle (Pic h1 w1 i1) (Pic h2 w2 i2) 
-                      = Pic h (w1+w2) (zipWith (++) (mpad h w1 i1) (mpad h w2 i2))
-                        where h = max h1 h2
+top    = horiz bpad
+bottom = horiz tpad
+middle = horiz mpad
+ 
+horiz :: (Int -> Int -> [String] -> [String]) -> Pic -> Pic -> Pic
+horiz pad (Pic lh lw limg) (Pic rh rw rimg)
+   | lh > rh   = Pic lh w (zipWith (++) limg (pad lh rw rimg))
+   | lh < rh   = Pic rh w (zipWith (++) (pad rh lw limg) rimg)
+   | otherwise = Pic lh w (zipWith (++) limg rimg)
+     where w        = lw + rw
 
 tpad         :: Int -> Int -> [String] -> [String]
-tpad h w ss   | l == h    = ss
-              | l > h     = take h ss
-              | otherwise = tpad h w (replicate w ' ' : ss)
-              where l = length ss
+tpad h w s    = reverse (bpad h w (reverse s))
 
 bpad         :: Int -> Int -> [String] -> [String]
-bpad h w ss   | l == h    = ss
-              | l > h     = bpad h w (tail ss)
-              | otherwise = bpad h w (ss ++ [replicate w ' '])
-              where l = length ss
+bpad h w s    = take h (s ++ repeat (replicate w ' '))
 
 mpad         :: Int -> Int -> [String] -> [String]
-mpad h w ss   | l == h    = ss
-              | l-h == 1  = take h ss
-              | l > h     = mpad h w (take (l-2) (tail ss))
-              | otherwise = mpad h w ([replicate w ' '] ++ ss ++ [replicate w ' '])
-              where l = length ss
+mpad h w s    = tpad th w (take split s) ++ bpad (h-th) w (drop split s)
+                where split = length s `div` 2
+                      th    = h `div` 2
+
 
 hborder    :: Int -> Pic -> Pic
 hborder n p = b `top` p `top` b
@@ -125,4 +111,6 @@ vpad, hpad :: Int -> (Pic -> Pic -> Pic) -> Pic -> Pic
 vpad n op p = vspace n `op` p
 hpad n op p = hspace n `op` p
 
+border  :: Int -> Pic -> Pic
+border n = hborder n . vborder n
 
