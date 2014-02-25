@@ -1,0 +1,58 @@
+{-
+
+Copyright (c) 2014 Daniel Leblanc
+
+-}
+
+import Data.List
+import Data.Either
+
+-- Some data types to keep track of the game state
+data Symbol     = X | O | T deriving (Eq, Show)
+type Square     = Either Int Symbol
+type Board      = [[Square]]
+data GameState  = Game { board :: Board, onMove :: Symbol }
+
+-- Starting game state
+initialGameState :: GameState
+initialGameState  = (Game (map (map Left)[[1,2,3],[4,5,6],[7,8,9]]) X)
+
+-- list of current available moves
+moves      :: Board -> [Int]
+moves board = [x | x <- lefts (concat board)]
+
+-- Score the current board.  Returning true if there is a victor.
+scoreGame  :: Board -> Maybe Int
+scoreGame board
+            | tieGame board = Just 0
+            | wonGame board = Just 1
+            | otherwise     = Nothing
+
+wonGame       :: Board -> Bool
+wonGame board  = any match (diag board ++ board ++ transpose board)
+               where match [a,b,c]  = a == b && b == c
+                     diag [[a,_,b],
+                           [_,c,_],
+                           [d,_,e]] = [[a,c,e],[b,c,d]]
+
+tieGame       :: Board -> Bool
+tieGame board  = null (moves board)
+
+applyMove  :: GameState -> Int -> GameState
+applyMove (Game board onMove) pos
+            = Game (map (map place) board) (switch onMove)
+            where place (Left i) | i == pos = Right onMove
+                  place x                   = x
+                  switch X = O
+                  switch O = X
+
+
+negamax    :: GameState -> Int
+negamax (Game board onmove)
+            | scoreGame board == Just 0 = 0
+            | scoreGame board == Just 1 = 1
+            | otherwise                 = bestSc
+            where state  = [applyMove (Game board onmove) x | x <- moves board]
+                  bestSc = negate $ minimum (map negamax state)
+
+
