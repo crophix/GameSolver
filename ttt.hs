@@ -26,11 +26,13 @@ moves      :: Board -> [Int]
 moves board = [x | x <- lefts (concat board)]
 
 -- Score the current board.  Returning true if there is a victor.
-scoreGame  :: Board -> Maybe Int
-scoreGame board
-            | tieGame board = Just 0
-            | wonGame board = Just 1
-            | otherwise     = Nothing
+scoreGame  :: GameState -> Maybe Int
+scoreGame game
+            | tieGame (board game) = Just 0
+            | wonGame (board game) = Just p
+            | otherwise            = Nothing
+              where p | onMove game == X =  1
+                      | otherwise        = -1
 
 wonGame       :: Board -> Bool
 wonGame board  = any match (diag board ++ board ++ transpose board)
@@ -50,13 +52,21 @@ applyMove (Game board onMove) pos
                   switch X = O
                   switch O = X
 
+bestMove     :: GameState -> GameState
+bestMove game = applyMove game m
+                where ms  = [(x, negamax (applyMove game x)) 
+                             | x <- moves (board game)]
+                      m   = fst (minimumBy cmp ms)
+                      cmp (_,x) (_,y) = compare x y
 
 negamax    :: GameState -> Int
-negamax (Game board onmove)
-            | scoreGame board == Just 0 = 0
-            | scoreGame board == Just 1 = 1
-            | otherwise                 = bestSc
-            where state  = [applyMove (Game board onmove) x | x <- moves board]
+negamax game
+            | scoreGame game == Just  0   =  0
+            | scoreGame game == Just  1   =  1
+            | scoreGame game == Just (-1) = -1
+            | otherwise                = bestSc
+            where state  = [applyMove (Game (board game) (onMove game)) x 
+                            | x <- moves (board game)]
                   bestSc = negate $ minimum (map negamax state)
 
 picBoard      :: Board -> Pic
