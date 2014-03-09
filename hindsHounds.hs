@@ -22,7 +22,10 @@ houndMoves :: Moves --Diagonal forward only
 houndMoves  = [(1,-1),(1,1)]
 
 moves           :: Position -> [Position] -> Moves -> [(Int, Int)]
-moves (a,b) o ms = [(a+x, b+y) | (x,y) <- ms, a+x > 0 && a + x < 9,b+y > 0 && b+y < 9, not ((a+x,b+y) `elem` o)]
+moves (a,b) o ms = [(a+x, b+y) | (x,y) <- ms, 
+                                 a+x > 0 && a+x < 9,
+                                 b+y > 0 && b+y < 9, 
+                                 not ((a+x,b+y) `elem` o)]
 
 scoreGame  :: FoxHounds -> Int
 scoreGame g | null (moves (fox g) (hounds g) foxMoves) =  p
@@ -32,7 +35,9 @@ scoreGame g | null (moves (fox g) (hounds g) foxMoves) =  p
                       | otherwise     = -1
 
 gameOver  :: FoxHounds -> Bool
-gameOver g = null (moves (fox g) (hounds g) foxMoves) || fst (fox g) == 1
+gameOver g = null (moves (fox g) (hounds g) foxMoves) || 
+             (and $ map null [moves s [fox g] houndMoves | s <- hounds g]) ||
+             fst (fox g) == 1
 
 switchPlayer  :: Symbol -> Symbol
 switchPlayer p | p == H    = F
@@ -55,9 +60,11 @@ allMoves g | onMove g == H = [applyMove g s e | s <- hounds g, e <- moves s [fox
            | otherwise     = [applyMove g (fox g) e | e <- moves (fox g) (hounds g) foxMoves]
 
 negamax  :: FoxHounds -> Int
-negamax g | result /= 0 = result
-          | otherwise   = maximum (map (negate . negamax) (allMoves g))
+negamax g | result /= 0  = result
+          | null ms      = result
+          | otherwise    = maximum (map (negate . negamax) ms)
             where result = scoreGame g
+                  ms     = allMoves g
 
 
 emptyBoard :: [(Position, Symbol)]
