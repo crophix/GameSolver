@@ -83,6 +83,10 @@ fillPos b (p:ps) s = fillPos (map (place p s) b) ps s
                      where place p s (l,e) | l == p    = (l,s)
                                            | otherwise = (l,e)
 
+tState1 :: FoxHounds
+tState1 = Game (fillPos (fillPos emptyBoard h H) [f] F) F h f
+          where h = [(1,1),(8,6),(6,8),(8,4)]
+                f = (2,8)
 
 
 picSquare          :: (Position,Symbol) -> Pic
