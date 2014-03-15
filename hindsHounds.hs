@@ -85,7 +85,7 @@ fillPos b (p:ps) s = fillPos (map (place p s) b) ps s
 
 tState1 :: FoxHounds
 tState1 = Game (fillPos (fillPos emptyBoard h H) [f] F) F h f
-          where h = [(1,1),(8,6),(6,8),(8,4)]
+          where h = [(7,1),(8,6),(7,7),(8,4)]
                 f = (2,8)
 
 
