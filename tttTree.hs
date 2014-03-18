@@ -4,18 +4,16 @@ Copyright (c) 2014 Daniel Leblanc
 
 -}
 
--- import Negamax
+import Negamax
 import Data.List(transpose)
 import AsciiPic
 
 data Symbol    = Empty Int | X | O deriving (Eq, Show)
 data TicTacToe = Game { board :: [[Symbol]], onMove :: Symbol }
                  deriving Show
-{-
-instance Node TicTacToe where
-    nextMoves = applyMoves
-    scoreGame = gameEval
--}
+
+solveGame  :: TicTacToe -> Int
+solveGame g = negamax gameOver applyMoves gameEval g
 
 switchPlayer  :: Symbol -> Symbol
 switchPlayer X = O
@@ -55,6 +53,21 @@ gameEval g | tieGame g               =  0
 tieGame :: TicTacToe -> Bool
 tieGame  = null . moves
 
+picGame       :: TicTacToe -> Pic
+picGame g      = picBoard (board g)       
+
+picBoard      :: [[Symbol]] -> Pic
+picBoard board = align center (map (align middle) b)
+                 where b = map (map picSquare) board
+
+picSquare     :: Symbol -> Pic
+picSquare x    = align center [tope, align middle [edge, item,edge], tope]
+                 where edge = text ["|","|","|"]
+                       tope = string "+-----+"
+                       item = string ("  " ++ (r x) ++ "  ")
+                       r (Empty n) = show n
+                       r a         = show x
+
 initialState :: TicTacToe
 initialState  = Game [[Empty 1,Empty 2,Empty 3],
                       [Empty 4,Empty 5,Empty 6],
@@ -62,7 +75,7 @@ initialState  = Game [[Empty 1,Empty 2,Empty 3],
 testState1 :: TicTacToe
 testState1  = Game [[Empty 1,O      ,Empty 3],
                     [Empty 4,X      ,Empty 6],
-                    [Empty 7,X      ,Empty 9]] O
+                    [Empty 7,Empty 8,Empty 9]] X
 
 testState2 :: TicTacToe
 testState2  = Game [[      O, X,Empty 3],
@@ -80,21 +93,3 @@ testState4  = Game [[O,X,O],
                     [X,O,X]] O
 
 
-negamax  :: TicTacToe -> Int
-negamax g | gameOver g = gameEval g
-          | otherwise  = maximum (map (negate . negamax) (applyMoves g))
-
-picGame       :: TicTacToe -> Pic
-picGame g      = picBoard (board g)       
-
-picBoard      :: [[Symbol]] -> Pic
-picBoard board = align center (map (align middle) b)
-                 where b = map (map picSquare) board
-
-picSquare     :: Symbol -> Pic
-picSquare x    = align center [tope, align middle [edge, item,edge], tope]
-                 where edge = text ["|","|","|"]
-                       tope = string "+-----+"
-                       item = string ("  " ++ (r x) ++ "  ")
-                       r (Empty n) = show n
-                       r a         = show x
